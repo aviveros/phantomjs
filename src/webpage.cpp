@@ -55,6 +55,8 @@
 #include <QDebug>
 #include <QImageWriter>
 #include <QUuid>
+#include <QUrl>
+#include <QNetworkProxy>
 
 #include "phantom.h"
 #include "networkaccessmanager.h"
@@ -383,7 +385,6 @@ WebPage::WebPage(QObject* parent, const QUrl& baseUrl)
     // (no parameter == main frame) but we make sure to do the setup only once.
     //
     // @see WebPage::setupFrame(QWebFrame *) for details.
-    connect(m_mainFrame, SIGNAL(loadStarted()), this, SLOT(switchToMainFrame()), Qt::QueuedConnection);
     connect(m_mainFrame, SIGNAL(loadFinished(bool)), this, SLOT(setupFrame()), Qt::QueuedConnection);
     connect(m_customWebPage, SIGNAL(frameCreated(QWebFrame*)), this, SLOT(setupFrame(QWebFrame*)), Qt::DirectConnection);
     connect(m_mainFrame, SIGNAL(javaScriptWindowObjectCleared()), this, SLOT(setupFrame()));
@@ -641,6 +642,21 @@ void WebPage::applySettings(const QVariantMap& def)
         m_networkAccessManager->setResourceTimeout(def[PAGE_SETTINGS_RESOURCE_TIMEOUT].toInt());
     }
 
+    if (def.contains(PAGE_SETTINGS_PROXY)) {
+        setProxy(def[PAGE_SETTINGS_PROXY].toString());
+    }
+}
+
+void WebPage::setProxy(const QString& proxyUrl)
+{
+    QUrl url(proxyUrl);
+    qDebug() << "Setting proxy to: " << url.scheme() << url.host() << url.port();
+    QNetworkProxy::ProxyType type = QNetworkProxy::HttpProxy;
+    if (url.scheme() == "socks5") {
+        type = QNetworkProxy::Socks5Proxy;
+    }
+    QNetworkProxy proxy(type, url.host(), url.port(), url.userName(), url.password());
+    m_networkAccessManager->setProxy(proxy);
 }
 
 QString WebPage::userAgent() const
@@ -1581,12 +1597,42 @@ QStringList WebPage::childFramesName() const //< deprecated
     return this->framesName();
 }
 
+// The main frame is never destroyed unexpectedly, but child frames
+// can go away for all sorts of reasons.  When this happens to the
+// frame that is m_currentFrame, we need to reset m_currentFrame to
+// m_mainFrame, *immediately* (hence Qt::DirectConnection), and
+// without touching any members of m_currentFrame.  It is sufficient
+// to register m_currentFrame for this treatment, because if any of
+// its parent frames are destroyed it will be destroyed too.
+
 void WebPage::changeCurrentFrame(QWebFrame* const frame)
 {
     if (frame != m_currentFrame) {
-        qDebug() << "WebPage - changeCurrentFrame" << "from" << (m_currentFrame == NULL ? "Undefined" : m_currentFrame->frameName()) << "to" << frame->frameName();
+        qDebug() << "WebPage - changeCurrentFrame"
+                 << "from" << m_currentFrame->frameName()
+                 << "to" << frame->frameName();
+
+        if (m_currentFrame != m_mainFrame) {
+            disconnect(m_currentFrame, &QWebFrame::destroyed,
+                       this, &WebPage::handleCurrentFrameDestroyed);
+        }
+
         m_currentFrame = frame;
+
+        if (m_currentFrame != m_mainFrame) {
+            connect(m_currentFrame, &QWebFrame::destroyed,
+                    this, &WebPage::handleCurrentFrameDestroyed,
+                    Qt::DirectConnection);
+        }
     }
+}
+
+// This is called from the QObject::destroyed signal and does not need
+// to (indeed, must not) do the monkeying with signals that
+// changeCurrentFrame does.
+void WebPage::handleCurrentFrameDestroyed()
+{
+    m_currentFrame = m_mainFrame;
 }
 
 bool WebPage::switchToFrame(const QString& frameName)

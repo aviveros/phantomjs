@@ -501,6 +501,8 @@ public slots:
 
     void clearMemoryCache();
 
+    void setProxy(const QString& proxyUrl);
+
 signals:
     void initialized();
     void loadStarted();
@@ -524,6 +526,7 @@ private slots:
     void updateLoadingProgress(int progress);
     void handleRepaintRequested(const QRect& dirtyRect);
     void handleUrlChanged(const QUrl& url);
+    void handleCurrentFrameDestroyed();
 
 private:
     QImage renderImage();
