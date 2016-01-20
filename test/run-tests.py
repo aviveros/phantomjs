@@ -762,6 +762,9 @@ class TestRunner(object):
             return ["lldb", "--", self.phantomjs_exe]
         elif debugger == "valgrind":
             return ["valgrind", self.phantomjs_exe]
+        elif debugger == "iprofiler":
+            os.environ['MallocStackLogging'] = "1"
+            return ["iprofiler", "-d", ".", "-o", "leaks", "-allocations", "-leaks", "-T", "0", self.phantomjs_exe]
         else:
             raise RuntimeError("Don't know how to invoke " + self.debugger)
 
