@@ -522,7 +522,7 @@ void Phantom::doExit(int code)
     emit aboutToExit(code);
     m_terminated = true;
     m_returnValue = code;
-    
+
     // Iterate in reverse order so the first page is the last one scheduled for deletion.
     // The first page is the root object, which will be invalidated when it is deleted.
     // This causes an assertion to go off in BridgeJSC.cpp Instance::createRuntimeObject.
@@ -530,7 +530,7 @@ void Phantom::doExit(int code)
     i.toBack();
     while (i.hasPrevious()) {
         const QPointer<WebPage> page = i.previous();
-    
+
         if (!page) {
             continue;
         }

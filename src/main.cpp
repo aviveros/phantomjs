@@ -75,7 +75,7 @@ static int inner_main(int argc, char** argv)
 
 #ifndef NDEBUG
     // Prevent a bunch of leak reports that cause errors in test/run-tests.py.
-    // The leaks are only reported when compiled for debug. 
+    // The leaks are only reported when compiled for debug.
     QWebSettings::clearMemoryCaches();
 #endif
 
