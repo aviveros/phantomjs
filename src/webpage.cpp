@@ -33,6 +33,7 @@
 #include <math.h>
 
 #include <QApplication>
+#include <QContextMenuEvent>
 #include <QDesktopServices>
 #include <QDateTime>
 #include <QDir>
@@ -409,16 +410,17 @@ WebPage::WebPage(QObject* parent, const QUrl& baseUrl)
     m_mainFrame->setScrollBarPolicy(Qt::Horizontal, Qt::ScrollBarAlwaysOff);
     m_mainFrame->setScrollBarPolicy(Qt::Vertical, Qt::ScrollBarAlwaysOff);
 
-    m_customWebPage->settings()->setAttribute(QWebSettings::OfflineStorageDatabaseEnabled, true);
-    m_customWebPage->settings()->setAttribute(QWebSettings::OfflineWebApplicationCacheEnabled, true);
-    m_customWebPage->settings()->setAttribute(QWebSettings::FrameFlatteningEnabled, true);
+    QWebSettings* pageSettings = m_customWebPage->settings();
+    pageSettings->setAttribute(QWebSettings::OfflineStorageDatabaseEnabled, true);
+    pageSettings->setAttribute(QWebSettings::OfflineWebApplicationCacheEnabled, true);
+    pageSettings->setAttribute(QWebSettings::FrameFlatteningEnabled, true);
 
-    m_customWebPage->settings()->setAttribute(QWebSettings::LocalStorageEnabled, true);
+    pageSettings->setAttribute(QWebSettings::LocalStorageEnabled, true);
 
     if (phantomCfg->localStoragePath().isEmpty()) {
-        m_customWebPage->settings()->setLocalStoragePath(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
+        pageSettings->setLocalStoragePath(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
     } else {
-        m_customWebPage->settings()->setLocalStoragePath(phantomCfg->localStoragePath());
+        pageSettings->setLocalStoragePath(phantomCfg->localStoragePath());
     }
 
     // Custom network access manager to allow traffic monitoring.
@@ -470,10 +472,18 @@ void WebPage::setContent(const QString& content, const QString& baseUrl)
     }
 }
 
-
 void WebPage::setFrameContent(const QString& content)
 {
     m_currentFrame->setHtml(content);
+}
+
+void WebPage::setFrameContent(const QString& content, const QString& baseUrl)
+{
+    if (baseUrl == "about:blank") {
+        m_currentFrame->setHtml(BLANK_HTML);
+    } else {
+        m_currentFrame->setHtml(content, QUrl(baseUrl));
+    }
 }
 
 QString WebPage::title() const
@@ -826,16 +836,6 @@ void WebPage::setCustomHeaders(const QVariantMap& headers)
 QVariantMap WebPage::customHeaders() const
 {
     return m_networkAccessManager->customHeaders();
-}
-
-QStringList WebPage::captureContent() const
-{
-    return m_networkAccessManager->captureContent();
-}
-
-void WebPage::setCaptureContent(const QStringList& patterns)
-{
-    m_networkAccessManager->setCaptureContent(patterns);
 }
 
 void WebPage::setCookieJar(CookieJar* cookieJar)
@@ -1513,6 +1513,29 @@ void WebPage::sendEvent(const QString& type, const QVariant& arg1, const QVarian
         QApplication::processEvents();
         return;
     }
+
+    // context click
+    if (type == "contextmenu") {
+        QContextMenuEvent::Reason reason = QContextMenuEvent::Mouse;
+
+        // Gather coordinates
+        if (arg1.isValid() && arg2.isValid()) {
+            m_mousePos.setX(arg1.toInt());
+            m_mousePos.setY(arg2.toInt());
+        }
+
+        // Prepare the context menu event
+        qDebug() << "Context Menu Event:" << eventType << "(" << reason << "," << m_mousePos << ")";
+        QContextMenuEvent* event = new QContextMenuEvent(reason, m_mousePos, QCursor::pos(), keyboardModifiers);
+
+        // Post and process events
+        // Send the context menu event directly to QWebPage::swallowContextMenuEvent which forwards it to JS
+        // If we fire the event using postEvent to m_customWebPage, it will end up in QWebPagePrivate::contextMenuEvent,
+        // which will not forward it to JS at all
+        m_customWebPage->swallowContextMenuEvent(event);
+        return;
+    }
+
 
     // mouse click events: Qt doesn't provide this as a separate events,
     // so we compose it with a mousedown/mouseup sequence

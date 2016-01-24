@@ -80,7 +80,7 @@ class WebPage : public QObject, public QWebFrame::PrintCallback
     Q_PROPERTY(int framesCount READ framesCount)
     Q_PROPERTY(QString focusedFrameName READ focusedFrameName)
     Q_PROPERTY(QObject* cookieJar READ cookieJar WRITE setCookieJarFromQObject)
-    Q_PROPERTY(QStringList captureContent READ captureContent WRITE setCaptureContent)
+
 public:
     WebPage(QObject* parent, const QUrl& baseUrl = QUrl());
     virtual ~WebPage();
@@ -184,26 +184,6 @@ public:
      */
     QStringList pagesWindowName() const;
     /**
-     * Returns a list of URL patterns, for which response body
-     * will be captured and returned in onResourceReceived event
-     *
-     * @brief captureContent
-     * @return List (JS Array) containing currently set patterns
-     */
-    QStringList captureContent() const;
-
-    /**
-     * Allows to set a list of URL patterns, for which response body
-     * will be captured and returned in onResourceReceived event
-     *
-     * EXAMPLE: page.captureContent = ['/foo/', '\.jpg' ]
-     *
-     * @brief captureContent
-     * @param patterns Expects a QList of QString
-     */
-    void setCaptureContent(const QStringList& patterns);
-
-    /**
      * Returns "true" if it owns the pages it creates (and keeps them in "pages[]").
      * Default value is "true". Can be changed using {@link setOwnsPages()}.
      *
@@ -285,6 +265,7 @@ public slots:
     void sendEvent(const QString& type, const QVariant& arg1 = QVariant(), const QVariant& arg2 = QVariant(), const QString& mouseButton = QString(), const QVariant& modifierArg = QVariant());
 
     void setContent(const QString& content, const QString& baseUrl);
+    void setFrameContent(const QString& content, const QString& baseUrl);
     /**
      * Returns a Child Page that matches the given <code>"window.name"</code>.
      * This utility method is faster than accessing the

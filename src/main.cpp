@@ -73,9 +73,15 @@ static int inner_main(int argc, char** argv)
     int retVal = phantom->returnValue();
     delete phantom;
 
+<<<<<<< HEAD
 #ifdef QT_DEBUG
     // Prevent a bunch of leak reports that cause errors in test/run-tests.py.
     // The leaks are only reported when compiled for debug.
+=======
+#ifndef QT_NO_DEBUG
+    // Clear all cached data before exiting, so it is not detected as
+    // leaked.
+>>>>>>> ariya/master
     QWebSettings::clearMemoryCaches();
 #endif
 

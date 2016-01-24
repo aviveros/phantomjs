@@ -40,7 +40,6 @@
 
 static QString findScript(const QString& jsFilePath, const QString& libraryPath)
 {
-    QString filePath = jsFilePath;
     if (!jsFilePath.isEmpty()) {
         QFile jsFile;
 
@@ -133,8 +132,7 @@ bool injectJsInFrame(const QString& jsFilePath, const QString& jsFileLanguage, c
         return false;
     }
     // Execute JS code in the context of the document
-    const QUrl jsFileUrl = QUrl::fromLocalFile(QDir::currentPath()).resolved(jsFilePath);
-    targetFrame->evaluateJavaScript(scriptBody, jsFileUrl);
+    targetFrame->evaluateJavaScript(scriptBody, QString(JAVASCRIPT_SOURCE_CODE_URL).arg(QFileInfo(scriptPath).fileName()));
     return true;
 }
 
@@ -149,7 +147,7 @@ bool loadJSForDebug(const QString& jsFilePath, const QString& jsFileLanguage, co
     QString scriptBody = jsFromScriptFile(scriptPath, jsFileLanguage, jsFileEnc);
 
     scriptBody = QString("function __run() {\n%1\n}").arg(scriptBody);
-    targetFrame->evaluateJavaScript(scriptBody);
+    targetFrame->evaluateJavaScript(scriptBody, QString(JAVASCRIPT_SOURCE_CODE_URL).arg(QFileInfo(scriptPath).fileName()));
 
     if (autorun) {
         targetFrame->evaluateJavaScript("__run()", QString());
