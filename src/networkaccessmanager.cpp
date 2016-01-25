@@ -212,9 +212,9 @@ void NetworkAccessManager::prepareSslConfiguration(const Config* config)
     // That overload isn't available on QSslConfiguration.
     if (!config->sslCiphers().isEmpty()) {
         QList<QSslCipher> cipherList;
-        foreach (const QString& cipherName,
-                 config->sslCiphers().split(QLatin1String(":"),
-                                            QString::SkipEmptyParts)) {
+        foreach(const QString & cipherName,
+                config->sslCiphers().split(QLatin1String(":"),
+                                           QString::SkipEmptyParts)) {
             QSslCipher cipher(cipherName);
             if (!cipher.isNull()) {
                 cipherList << cipher;
@@ -291,34 +291,6 @@ QVariantMap NetworkAccessManager::customHeaders() const
     return m_customHeaders;
 }
 
-<<<<<<< HEAD
-QStringList NetworkAccessManager::captureContent() const
-{
-    return m_captureContentPatterns;
-}
-
-void NetworkAccessManager::setCaptureContent(const QStringList& patterns)
-{
-    m_captureContentPatterns = patterns;
-
-    compileCaptureContentPatterns();
-}
-
-void NetworkAccessManager::compileCaptureContentPatterns()
-{
-    foreach (const QString& plainRegex, m_captureContentPatterns) {
-        QRegExp regexp = QRegExp(plainRegex, Qt::CaseInsensitive);
-        if (m_compiledCaptureContentPatterns.contains(regexp)) {
-            qWarning() << "Attempt to add duplicate regular expression: " << plainRegex;
-        } else {
-            m_compiledCaptureContentPatterns.append(regexp);
-        }
-    }
-}
-
-
-=======
->>>>>>> ariya/master
 void NetworkAccessManager::setCookieJar(QNetworkCookieJar* cookieJar)
 {
     QNetworkAccessManager::setCookieJar(cookieJar);
@@ -368,7 +340,7 @@ QNetworkReply* NetworkAccessManager::createRequest(Operation op, const QNetworkR
     m_idCounter++;
 
     QVariantList headers;
-    foreach (QByteArray headerName, req.rawHeaderList()) {
+    foreach(QByteArray headerName, req.rawHeaderList()) {
         QVariantMap header;
         header["name"] = QString::fromUtf8(headerName);
         header["value"] = QString::fromUtf8(req.rawHeader(headerName));
@@ -415,19 +387,9 @@ QNetworkReply* NetworkAccessManager::createRequest(Operation op, const QNetworkR
 
     m_ids[reply] = m_idCounter;
 
-<<<<<<< HEAD
-bool NetworkAccessManager::shouldCaptureResponse(const QString& url)
-{
-    foreach (QRegExp regexp, m_compiledCaptureContentPatterns) {
-        if (regexp.indexIn(url) != -1) {
-            return true;
-        }
-    }
-=======
     connect(reply, SIGNAL(readyRead()), this, SLOT(handleStarted()));
     connect(reply, SIGNAL(sslErrors(const QList<QSslError>&)), this, SLOT(handleSslErrors(const QList<QSslError>&)));
     connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handleNetworkError()));
->>>>>>> ariya/master
 
     return reply;
 }
@@ -527,12 +489,8 @@ void NetworkAccessManager::handleFinished(QNetworkReply* reply, const QVariant& 
 
 void NetworkAccessManager::handleSslErrors(const QList<QSslError>& errors)
 {
-<<<<<<< HEAD
-    foreach (QSslError e, errors) {
-=======
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
     foreach(QSslError e, errors) {
->>>>>>> ariya/master
         qDebug() << "Network - SSL Error:" << e;
     }
 
@@ -563,7 +521,7 @@ void NetworkAccessManager::handleNetworkError()
 QVariantList NetworkAccessManager::getHeadersFromReply(const QNetworkReply* reply)
 {
     QVariantList headers;
-    foreach (QByteArray headerName, reply->rawHeaderList()) {
+    foreach(QByteArray headerName, reply->rawHeaderList()) {
         QVariantMap header;
         header["name"] = QString::fromUtf8(headerName);
         header["value"] = QString::fromUtf8(reply->rawHeader(headerName));
