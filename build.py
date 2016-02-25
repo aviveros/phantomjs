@@ -353,7 +353,7 @@ class PhantomJSBuilder(object):
 
     # run all build steps required to get a final PhantomJS binary at the end
     def run(self):
-        self.ensureSubmodulesAvailable();
+        #@@@ self.ensureSubmodulesAvailable();
         self.buildQtBase()
         self.buildQtWebKit()
         self.buildPhantomJS()
