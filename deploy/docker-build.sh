@@ -48,7 +48,8 @@ cd $BUILD_PATH && cp -rp $SOURCE_PATH . && cd src
 echo
 
 echo "Compiling PhantomJS..." && sleep 1
-python build.py --confirm --release --qt-config="-no-pkg-config" --git-clean-qtbase --git-clean-qtwebkit
+#python build.py --confirm --release --qt-config="-no-pkg-config" --git-clean-qtbase --git-clean-qtwebkit
+python build.py --confirm --release --qt-config="-no-pkg-config" --skip-git 
 echo
 
 echo "Stripping the executable..." && sleep 1
